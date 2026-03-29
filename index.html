@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SNOIR — Coming Soon</title>
+
+  <!-- ============================================================
+       SNOIR CONFIGURATION
+       Change LAUNCH_DATE to set your countdown target.
+       Format: 'YYYY-MM-DDTHH:MM:SS' (local time)
+       ============================================================ -->
+  <script>
+    const SNOIR_CONFIG = {
+      LAUNCH_DATE: '2026-04-17T00:00:00',   // ← CHANGE THIS DATE
+      BRAND_NAME:  'SNOIR',                  // ← Brand display name
+      COLLECTION:  '',           // ← Collection / sub-brand
+      TAGLINE:     'A new olfactory chapter arrives soon',
+      ORIGIN_LINE: 'Luxury Eau de Parfum',
+    };
+  </script>
+
+  <!--
+    EMAIL COLLECTION OPTIONS (uncomment one):
+
+    OPTION A — Formspree (simplest, free 50/mo)
+      1. Sign up at formspree.io, create a form, copy your form ID
+      2. Set FORMSPREE_ID below and set EMAIL_PROVIDER = 'formspree'
+
+    OPTION B — Mailchimp (recommended, free up to 500 contacts)
+      1. In Mailchimp: Audience → Signup forms → Embedded forms → copy action URL
+      2. Paste the full action URL as MAILCHIMP_URL below
+      3. Set EMAIL_PROVIDER = 'mailchimp'
+  -->
+  <script>
+    const EMAIL_CONFIG = {
+      EMAIL_PROVIDER: 'formspree',       // 'formspree' | 'mailchimp' | 'none'
+      FORMSPREE_ID:   'YOUR_FORM_ID',    // e.g. 'xrgwkpzb'
+      MAILCHIMP_URL:  'YOUR_MAILCHIMP_ACTION_URL',
+    };
+  </script>
+
+  <!-- The Seasons font via CDN (Fontshare) -->
+  <link rel="preconnect" href="https://api.fontshare.com" />
+  <link href="https://api.fontshare.com/v2/css?f[]=the-seasons@300,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300;1,400&family=Cinzel:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --ivory:       #f5f0e8;
+      --ivory-deep:  #ede6d6;
+      --gold-main:   #c4a05a;
+      --gold-light:  #e8d098;
+      --gold-warm:   #b8925a;
+      --ink:         #2a2218;
+      --ink-muted:   #5a4e38;
+      --ink-faint:   #9a8a6a;
+    }
+
+    html, body {
+      width: 100%; min-height: 100vh;
+      background: var(--ivory);
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      position: relative;
+    }
+
+    /* ── Canvas ── */
+    #particles {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      z-index: 1; pointer-events: none;
+    }
+
+    /* ── Vignette ── */
+    .vignette {
+      position: fixed; inset: 0; z-index: 2; pointer-events: none;
+      background: radial-gradient(ellipse 85% 75% at 50% 50%,
+        transparent 35%, rgba(215,200,170,0.50) 100%);
+    }
+
+    /* ── Noise grain ── */
+    .grain {
+      position: fixed; inset: 0; z-index: 2; pointer-events: none;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 160px;
+    }
+
+    /* ── Layout ── */
+    .page {
+      position: relative; z-index: 3;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100vh;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+      gap: 0;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.6rem 2.4rem;
+      opacity: 0; animation: fadeIn 1.4s ease forwards 3s;
+    }
+
+    .topbar-logo {
+      font-family: 'the seasons', 'Cormorant Garamond', serif;
+      font-size: 13px; letter-spacing: 0.35em;
+      color: var(--gold-main); text-transform: uppercase;
+    }
+
+    .sound-btn {
+      background: transparent;
+      border: 0.5px solid rgba(196,160,90,0.5);
+      color: var(--ink-faint);
+      font-family: 'Cinzel', serif;
+      font-size: 7.5px; letter-spacing: 0.35em;
+      padding: 7px 14px; cursor: pointer;
+      text-transform: uppercase; transition: all 0.4s;
+    }
+    .sound-btn:hover { border-color: var(--gold-main); color: var(--gold-warm); }
+    .sound-btn.on    { border-color: var(--gold-warm); color: var(--gold-warm); }
+
+    /* ── Eyebrow ── */
+    .eyebrow {
+      font-family: 'Cinzel', serif;
+      font-size: 8.5px; font-weight: 400;
+      letter-spacing: 0.55em; color: var(--gold-main);
+      text-transform: uppercase;
+      opacity: 0; animation: fadeUp 1.4s ease forwards 0.4s;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Brand mark ── */
+    .brand-wrap {
+      position: relative; margin-bottom: 0.2em;
+      opacity: 0; animation: fadeIn 2s ease forwards 0.7s;
+    }
+
+    .brand {
+      font-family: 'the seasons', 'Cormorant Garamond', serif;
+      font-size: clamp(72px, 14vw, 148px);
+      font-weight: 300; letter-spacing: 0.3em;
+      color: var(--ink); line-height: 1;
+      display: block;
+    }
+
+    /* Sheen overlay */
+    .brand-sheen {
+      position: absolute; inset: 0;
+      font-family: 'the seasons', 'Cormorant Garamond', serif;
+      font-size: clamp(72px, 14vw, 148px);
+      font-weight: 300; letter-spacing: 0.3em;
+      line-height: 1;
+      color: transparent;
+      background: linear-gradient(110deg,
+        transparent 0%, transparent 20%,
+        rgba(240,210,130,0.55) 40%,
+        rgba(255,240,180,0.80) 50%,
+        rgba(240,210,130,0.55) 60%,
+        transparent 80%, transparent 100%);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: sheen 5s ease-in-out infinite 2.5s;
+      pointer-events: none;
+    }
+
+    @keyframes sheen {
+      0%   { background-position: 200% 50%; }
+      100% { background-position: -100% 50%; }
+    }
+
+    /* ── Sub-brand ── */
+    .sub-brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(14px, 2vw, 19px);
+      font-style: italic; font-weight: 300;
+      letter-spacing: 0.28em;
+      color: var(--gold-warm);
+      opacity: 0; animation: fadeUp 1.4s ease forwards 1.2s;
+      margin-bottom: 0.6rem;
+    }
+
+    .luxury-label {
+      font-family: 'Cinzel', serif;
+      font-size: 16px; letter-spacing: 0.48em;
+      color: var(--ink-faint); text-transform: uppercase;
+      opacity: 0; animation: fadeUp 1.2s ease forwards 1.5s;
+      margin-bottom: 2.4rem;
+    }
+
+    /* ── Ornament ── */
+    .ornament {
+      display: flex; align-items: center; gap: 10px;
+      opacity: 0; animation: fadeIn 1.4s ease forwards 1.8s;
+      margin-bottom: 2.6rem;
+    }
+    .orn-line   { width: 64px; height: 0.5px; background: var(--gold-main); opacity: 0.55; }
+    .orn-circle { width: 4px; height: 4px; border-radius: 50%; border: 0.5px solid var(--gold-main); }
+    .orn-diamond { width: 4px; height: 4px; border: 0.5px solid var(--gold-main); transform: rotate(45deg); }
+
+    /* ── Countdown ── */
+    .countdown-wrap {
+      display: flex; gap: clamp(10px, 2.5vw, 38px);
+      align-items: flex-start; margin-bottom: 3rem;
+      opacity: 0; animation: fadeUp 1.4s ease forwards 2s;
+    }
+    .cd-block { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+    .cd-num {
+      font-family: 'the seasons', 'Cormorant Garamond', serif;
+      font-size: clamp(32px, 5.5vw, 58px);
+      font-weight: 300; color: var(--ink); line-height: 1;
+      letter-spacing: 0.04em; min-width: 2ch; text-align: center;
+    }
+    .cd-label {
+      font-family: 'Cinzel', serif;
+      font-size: 7px; letter-spacing: 0.44em;
+      color: var(--gold-main); text-transform: uppercase;
+    }
+    .cd-sep {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(28px, 4.5vw, 48px);
+      color: var(--gold-light); line-height: 1; padding-top: 4px;
+    }
+
+    /* ── Email form ── */
+    .notify-block {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 12px;
+      opacity: 0; animation: fadeUp 1.4s ease forwards 2.4s;
+    }
+    .notify-text {
+      font-family: 'Cinzel', serif;
+      font-size: 8px; letter-spacing: 0.48em;
+      color: var(--ink-faint); text-transform: uppercase;
+    }
+    .notify-form {
+      display: flex; align-items: stretch;
+      border: 0.5px solid var(--gold-main);
+      background: rgba(255,252,245,0.55);
+      transition: box-shadow 0.4s;
+    }
+    .notify-form:focus-within {
+      box-shadow: 0 0 0 3px rgba(196,160,90,0.10);
+    }
+    .notify-input {
+      background: transparent; border: none; outline: none;
+      padding: 12px 20px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px; letter-spacing: 0.12em;
+      color: var(--ink); width: 220px;
+    }
+    .notify-input::placeholder { color: var(--gold-main); opacity: 0.55; letter-spacing: 0.15em; }
+    .notify-btn {
+  background: transparent;
+  border: 0.5px solid var(--gold-main);
+  padding: 12px 26px;
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 0.45em;
+  color: var(--gold-warm);
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.4s ease;
+}
+
+.notify-btn:hover {
+  background: rgba(196,160,90,0.08);
+  color: var(--ink);
+  border-color: var(--gold-warm);
+}
+    .confirmed {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: 14px;
+      letter-spacing: 0.12em; color: var(--gold-warm);
+      display: none;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      position: fixed; bottom: 1.8rem; left: 0; right: 0;
+      display: flex; justify-content: center; gap: 36px; z-index: 10;
+      opacity: 0; animation: fadeIn 2s ease forwards 3.2s;
+    }
+    .footer-link {
+      font-family: 'Cinzel', serif;
+      font-size: 7px; letter-spacing: 0.42em;
+      color: var(--gold-main); opacity: 0.5;
+      text-transform: uppercase; cursor: pointer;
+      transition: opacity 0.3s; text-decoration: none;
+    }
+    .footer-link:hover { opacity: 1; }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+
+    /* ── Tablet (≤768px) ── */
+    @media (max-width: 768px) {
+      .topbar { padding: 1.2rem 1.4rem; }
+      .topbar-logo { font-size: 11px; letter-spacing: 0.25em; }
+      .sound-btn { font-size: 7px; padding: 6px 10px; letter-spacing: 0.25em; }
+
+      .page { padding: 4.5rem 1.5rem 3.5rem; }
+
+      .eyebrow { font-size: 7.5px; letter-spacing: 0.38em; margin-bottom: 1.2rem; }
+      .luxury-label { font-size: 7px; letter-spacing: 0.32em; }
+
+      .ornament { margin-bottom: 2rem; }
+      .orn-line { width: 44px; }
+
+      .countdown-wrap { margin-bottom: 2.4rem; gap: clamp(8px, 2vw, 24px); }
+
+      .notify-input { width: 190px; }
+      .footer { gap: 24px; bottom: 1.4rem; }
+      .footer-link { font-size: 7px; letter-spacing: 0.3em; }
+    }
+
+    /* ── Mobile portrait (≤480px) ── */
+    @media (max-width: 480px) {
+      /* Topbar: stack or tighten */
+      .topbar { padding: 1rem 1.2rem; }
+      .topbar-logo { font-size: 10px; letter-spacing: 0.2em; }
+      .sound-btn { font-size: 6.5px; padding: 5px 9px; letter-spacing: 0.2em; }
+
+      .page { padding: 4rem 1.2rem 3rem; justify-content: center; }
+
+      /* Reduce letter-spacing to prevent horizontal overflow */
+      .eyebrow { font-size: 7px; letter-spacing: 0.28em; margin-bottom: 1rem; }
+      .brand { letter-spacing: 0.18em; }
+      .brand-sheen { letter-spacing: 0.18em; }
+      .sub-brand { font-size: clamp(13px, 3.5vw, 17px); letter-spacing: 0.18em; margin-bottom: 0.5rem; }
+      .luxury-label { font-size: 6.5px; letter-spacing: 0.22em; margin-bottom: 1.8rem; }
+
+      .ornament { margin-bottom: 1.8rem; gap: 7px; }
+      .orn-line { width: 32px; }
+
+      /* Countdown: tighter gaps */
+      .countdown-wrap { gap: 8px; margin-bottom: 2rem; }
+      .cd-label { font-size: 6.5px; letter-spacing: 0.28em; }
+      .cd-sep { font-size: clamp(22px, 5vw, 34px); }
+
+      /* Email form: stack vertically on very small screens */
+      .notify-block { gap: 10px; width: 100%; align-items: center; }
+      .notify-text { font-size: 7px; letter-spacing: 0.32em; }
+      .notify-form {
+        flex-direction: column;
+        width: min(88vw, 300px);
+        border: 0.5px solid var(--gold-main);
+      }
+      .notify-input {
+        width: 100%;
+        border-bottom: 0.5px solid var(--gold-main);
+        padding: 11px 16px;
+        text-align: center;
+      }
+      .notify-btn {
+        border-left: none;
+        border-top: 0.5px solid var(--gold-main);
+        padding: 10px 16px;
+        width: 100%;
+      }
+
+      .footer { gap: 18px; bottom: 1.2rem; }
+      .footer-link { font-size: 6.5px; letter-spacing: 0.26em; }
+    }
+
+    /* ── Very small (≤360px, e.g. Galaxy S8) ── */
+    @media (max-width: 360px) {
+      .eyebrow { letter-spacing: 0.18em; }
+      .brand { letter-spacing: 0.10em; }
+      .brand-sheen { letter-spacing: 0.10em; }
+      .luxury-label { letter-spacing: 0.16em; }
+      .countdown-wrap { gap: 5px; }
+      .cd-label { letter-spacing: 0.18em; }
+      .footer { gap: 12px; }
+    }
+
+    /* ── Reduce motion for accessibility ── */
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="particles"></canvas>
+  <div class="grain"></div>
+  <div class="vignette"></div>
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-logo" id="topbarLogo"></div>
+    <button class="sound-btn" id="soundBtn" onclick="toggleSound()">◯ Ambience</button>
+  </header>
+
+  <!-- Main content -->
+  <main class="page">
+    <div class="eyebrow" id="eyebrowText"></div>
+
+    <div class="brand-wrap">
+      <span class="brand" id="brandName"></span>
+      <span class="brand-sheen" id="brandSheen" aria-hidden="true"></span>
+    </div>
+
+    <div class="sub-brand" id="subBrand"></div>
+    <div class="luxury-label" id="taglineText"></div>
+
+    <div class="ornament">
+      <div class="orn-line"></div>
+      <div class="orn-circle"></div>
+      <div class="orn-diamond"></div>
+      <div class="orn-circle"></div>
+      <div class="orn-line"></div>
+    </div>
+
+    <div class="countdown-wrap">
+      <div class="cd-block"><div class="cd-num" id="cd-d">00</div><div class="cd-label">Days</div></div>
+      <div class="cd-sep">·</div>
+      <div class="cd-block"><div class="cd-num" id="cd-h">00</div><div class="cd-label">Hours</div></div>
+      <div class="cd-sep">·</div>
+      <div class="cd-block"><div class="cd-num" id="cd-m">00</div><div class="cd-label">Minutes</div></div>
+      <div class="cd-sep">·</div>
+      <div class="cd-block"><div class="cd-num" id="cd-s">00</div><div class="cd-label">Seconds</div></div>
+    </div>
+
+    <div class="notify-block">
+  <div class="notify-text">Request early access</div>
+
+  <button class="notify-btn" onclick="handleNotifyClick()">
+    Enter
+  </button>
+</div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <a class="footer-link" href="https://instagram.com" target="_blank">Instagram</a>
+    <a class="footer-link">Privacy</a>
+    <a class="footer-link">Contact</a>
+  </footer>
+
+  <!-- ============================================================
+       SCRIPTS
+  ============================================================ -->
+  <script>
+
+    // Populate text from config
+    document.getElementById('topbarLogo').textContent   = SNOIR_CONFIG.BRAND_NAME;
+    document.getElementById('brandName').textContent    = SNOIR_CONFIG.BRAND_NAME;
+    document.getElementById('brandSheen').textContent   = SNOIR_CONFIG.BRAND_NAME;
+    document.getElementById('subBrand').textContent     = SNOIR_CONFIG.COLLECTION;
+    document.getElementById('taglineText').textContent  = SNOIR_CONFIG.TAGLINE;
+    document.getElementById('eyebrowText').textContent  = SNOIR_CONFIG.ORIGIN_LINE;
+
+    // ── Countdown ──────────────────────────────────────────────
+    const LAUNCH = new Date(SNOIR_CONFIG.LAUNCH_DATE).getTime();
+    const pad = n => String(Math.max(0, n)).padStart(2, '0');
+
+    function tick() {
+      const diff = Math.max(0, LAUNCH - Date.now());
+      document.getElementById('cd-d').textContent = pad(Math.floor(diff / 86400000));
+      document.getElementById('cd-h').textContent = pad(Math.floor(diff % 86400000 / 3600000));
+      document.getElementById('cd-m').textContent = pad(Math.floor(diff % 3600000 / 60000));
+      document.getElementById('cd-s').textContent = pad(Math.floor(diff % 60000 / 1000));
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    // ── Gold dust wave ribbon ──────────────────────────────────────
+    (function () {
+      const canvas = document.getElementById('particles');
+      const ctx = canvas.getContext('2d');
+      let W, H, t = 0;
+      const MOUSE = { x: -9999, y: -9999 };
+
+      // ── Two particle populations ──
+      // RIBBON: dense band of particles locked near a travelling sine wave
+      // AMBIENT: sparse floaters scattered across the full canvas
+
+      const RIBBON_COUNT  = 7000;
+      const AMBIENT_COUNT = 700;
+      const RIBBON_SPREAD = 100;
+
+      // Wave shape — sum of two sine curves so it looks organic like the reference
+      function waveY(x, time) {
+        return H * 0.52
+          + Math.sin(x * 0.0055 + time * 0.55) * H * 0.07
+          + Math.sin(x * 0.0110 - time * 0.38) * H * 0.035
+          + Math.sin(x * 0.0022 + time * 0.20) * H * 0.05;
+      }
+
+      function rand(a, b) { return Math.random() * (b - a) + a; }
+
+      function goldColor(brightness) {
+        // brightness 0–1: deep gold → bright champagne
+        const t = brightness;
+        const r = Math.floor(180 + t * 75);
+        const g = Math.floor(138 + t * 102);
+        const b = Math.floor(45  + t * 155);
+        return `${r},${g},${b}`;
+      }
+
+      // Ribbon particle — locked to a specific X position on the wave
+      function mkRibbon() {
+        const x = rand(0, W);
+        const offset = rand(-RIBBON_SPREAD, RIBBON_SPREAD); // distance from wave centre
+        // Particles near centre are brighter and bigger
+        const centreness = 1 - Math.abs(offset) / RIBBON_SPREAD;
+        return {
+          type: 'ribbon',
+          x,
+          offsetY: offset,           // fixed perpendicular offset from wave
+          noiseX:  rand(-2, 2),      // subtle jitter so it doesn't look rigid
+          noiseY:  rand(-2, 2),
+          noisePhase: rand(0, Math.PI * 2),
+          r:     rand(0.3, 0.9) + centreness * 1.4,
+          alpha: rand(0.15, 0.45) + centreness * 0.45,
+          ad:    rand(-0.005, 0.005),
+          brightness: centreness * 0.7 + rand(0, 0.3),
+          speed: rand(0.18, 0.55),   // drift speed left→right
+        };
+      }
+
+      // Ambient particle — floats freely across the whole canvas
+      function mkAmbient() {
+        return {
+          type: 'ambient',
+          x:     rand(0, W),
+          y:     rand(0, H),
+          vx:    rand(-0.08, 0.08),
+          vy:    rand(-0.14, -0.01),
+          r:     rand(0.4, 1.8),
+          alpha: rand(0.04, 0.35),
+          ad:    rand(-0.003, 0.003),
+          brightness: rand(0.3, 1.0),
+        };
+      }
+
+      let ribbon  = [];
+      let ambient = [];
+
+      function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+      }
+
+      function init() {
+        resize();
+        ribbon  = Array.from({ length: RIBBON_COUNT },  mkRibbon);
+        ambient = Array.from({ length: AMBIENT_COUNT }, mkAmbient);
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        t += 0.012;
+
+        // ── Draw ribbon particles ──
+        ribbon.forEach(p => {
+          // Drift X slowly; wrap
+          p.x += p.speed * 0.4;
+          if (p.x > W + 20) p.x = -20;
+
+          // Y = wave position + fixed offset + gentle noise
+          const noise = Math.sin(t * 1.8 + p.noisePhase) * p.noiseX;
+          const wy = waveY(p.x, t);
+          const px = p.x + noise;
+          const py = wy + p.offsetY + Math.sin(t * 2.2 + p.noisePhase) * p.noiseY;
+
+          // Mouse disturb: push away from cursor
+          const mx = px - MOUSE.x, my = py - MOUSE.y;
+          const md = Math.sqrt(mx*mx + my*my);
+          let drawY = py;
+          if (md < 90 && md > 0) drawY += (my / md) * (90 - md) * 0.35;
+
+          // Alpha breathe
+          p.alpha += p.ad;
+          if (p.alpha < 0.05 || p.alpha > 0.95) p.ad *= -1;
+          p.alpha = Math.max(0.05, Math.min(0.95, p.alpha));
+
+          ctx.beginPath();
+          ctx.arc(px, drawY, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${goldColor(p.brightness)},${p.alpha})`;
+          ctx.fill();
+        });
+
+        // ── Draw ambient floaters ──
+        ambient.forEach(p => {
+          p.x  += p.vx; p.y += p.vy;
+          p.alpha += p.ad;
+          if (p.alpha < 0.02 || p.alpha > 0.38) p.ad *= -1;
+          p.alpha = Math.max(0.02, Math.min(0.38, p.alpha));
+          if (p.y < -8) { p.y = H + 8; p.x = rand(0, W); }
+          if (p.x < -8) p.x = W + 8;
+          if (p.x > W+8) p.x = -8;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${goldColor(p.brightness)},${p.alpha})`;
+          ctx.fill();
+        });
+
+        // ── Soft glow along the wave spine using a blurred stroke ──
+        ctx.save();
+        ctx.globalAlpha = 0.018;
+        ctx.strokeStyle = 'rgba(220,185,100,1)';
+        ctx.lineWidth = 28;
+        ctx.filter = 'blur(12px)';
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 6) {
+          const y = waveY(x, t);
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.filter = 'none';
+        ctx.restore();
+
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('mousemove', e => { MOUSE.x = e.clientX; MOUSE.y = e.clientY; });
+      window.addEventListener('mouseleave', () => { MOUSE.x = -9999; MOUSE.y = -9999; });
+      window.addEventListener('resize', () => { resize(); init(); });
+      init();
+      draw();
+    })();
+
+    // ── Ambient sound ──────────────────────────────────────────
+    let audioCtx = null, soundOn = false;
+
+    function buildAmbience(ac) {
+      const master = ac.createGain();
+      master.gain.setValueAtTime(0, ac.currentTime);
+      master.gain.linearRampToValueAtTime(0.9, ac.currentTime + 1.0);
+      master.connect(ac.destination);
+
+      // Crystal bowl ping: fundamental + detuned partial + octave, with reverb tail
+      // No drone, no noise — only clean chimes that fade into silence
+      function ping() {
+        const now   = ac.currentTime;
+        const notes = [220, 261.63, 329.63, 392, 440, 523.25];
+        const base  = notes[Math.floor(Math.random() * notes.length)];
+        const detune = 1.2 + Math.random() * 3.0;
+
+        // Convolution reverb — short decaying noise impulse gives the bowl tail
+        const convLen = Math.floor(ac.sampleRate * 2.4);
+        const convBuf = ac.createBuffer(2, convLen, ac.sampleRate);
+        for (let ch = 0; ch < 2; ch++) {
+          const d = convBuf.getChannelData(ch);
+          for (let i = 0; i < convLen; i++)
+            d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / convLen, 3.2);
+        }
+        const reverb     = ac.createConvolver(); reverb.buffer = convBuf;
+        const reverbGain = ac.createGain();      reverbGain.gain.value = 0.42;
+        reverb.connect(reverbGain); reverbGain.connect(master);
+
+        // Three partials: fundamental, detuned twin, octave
+        [[base, 0.060], [base + detune, 0.044], [base * 2, 0.020]].forEach(([freq, vol]) => {
+          const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
+          const g = ac.createGain();
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(vol, now + 0.007);   // crisp attack
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 4.2); // long crystal decay
+          o.connect(g);
+          g.connect(master);   // dry
+          g.connect(reverb);   // wet reverb tail
+          o.start(now); o.stop(now + 4.4);
+        });
+
+        setTimeout(ping, 1600 + Math.random() * 3800);
+      }
+
+      // Two staggered pings on start so it feels immediately alive
+      setTimeout(ping,  300);
+      setTimeout(ping, 2100);
+    }
+
+    function toggleSound() {
+      const btn = document.getElementById('soundBtn');
+      if (!soundOn) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        buildAmbience(audioCtx);
+        btn.textContent = '● Ambience'; btn.classList.add('on');
+        soundOn = true;
+      } else {
+        audioCtx.close(); audioCtx = null;
+        btn.textContent = '◯ Ambience'; btn.classList.remove('on');
+        soundOn = false;
+      }
+    }
+
+    // ── Email submission ──────────────────────────────────────
+    function submitEmail() {
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email || !email.includes('@')) return;
+
+  // Replace with your Google Form link
+  const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/XXXX/viewform";
+
+  // Optional: pass email prefill (if you configure it in form)
+  window.open(GOOGLE_FORM_URL, '_blank');
+}
+
+document.addEventListener('click', (e) => {
+  // Ignore clicks on notify button
+  if (e.target.closest('.notify-btn')) return;
+
+  if (!soundOn) {
+    toggleSound();
+  }
+}, { once: true });
+
+window.addEventListener('load', () => {
+  const btn = document.getElementById('soundBtn');
+  btn.textContent = '● Ambience';
+  btn.classList.add('on');
+});
+
+function handleNotifyClick() {
+  // Stop sound if playing
+  if (soundOn && audioCtx) {
+    audioCtx.close();
+    audioCtx = null;
+    soundOn = false;
+
+    const btn = document.getElementById('soundBtn');
+    btn.textContent = '◯ Ambience';
+    btn.classList.remove('on');
+  }
+
+  // Replace with your Google Form link
+  const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdZ3N-gpZzY553dFcQmqXvtooACyHGaVWNeLqj7CPP3qwAbJQ/viewform?usp=publish-editor";
+
+  window.open(GOOGLE_FORM_URL, '_blank');
+}
+  </script>
+</body>
+</html>
